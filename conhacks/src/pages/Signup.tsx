@@ -1,59 +1,90 @@
-import { useState } from "react";
-import { supabase } from "../lib/supabase";
-import { useNavigate, Link } from "react-router-dom";
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { supabase } from '../lib/supabase'
 
 export default function Signup() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [message, setMessage] = useState("");
-  const navigate = useNavigate();
+  const navigate = useNavigate()
+  const [email, setEmail]       = useState('')
+  const [password, setPassword] = useState('')
+  const [loading, setLoading]   = useState(false)
+  const [message, setMessage]   = useState<{ type: 'error' | 'success'; text: string } | null>(null)
 
-  async function handleSignup(e: React.FormEvent) {
-    e.preventDefault();
-    setMessage("");
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setMessage(null)
 
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-    });
+    const { error } = await supabase.auth.signUp({ email, password })
 
     if (error) {
-      setMessage(error.message);
-      return;
+      setMessage({ type: 'error', text: error.message })
+    } else {
+      setMessage({ type: 'success', text: 'Account created. Check your email to confirm, then login.' })
+      setTimeout(() => navigate('/login'), 2500)
     }
 
-    setMessage("Signup successful. You can now log in.");
-    setTimeout(() => navigate("/login"), 1000);
+    setLoading(false)
   }
 
   return (
-    <div>
-      <h1>Signup</h1>
+    <div className="auth-page">
+      <div className="auth-card">
 
-      <form onSubmit={handleSignup}>
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
+        <span className="auth-logo">CHAOS PLATFORM</span>
+        <h1 className="auth-title">Create account</h1>
+        <p className="auth-subtitle">// join the chaos</p>
 
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
+        <form className="auth-form" onSubmit={handleSignup}>
+          <div className="form-group">
+            <label className="form-label" htmlFor="email">Email</label>
+            <input
+              id="email"
+              className="form-input"
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              autoComplete="email"
+            />
+          </div>
 
-        <button type="submit">Create Account</button>
-      </form>
+          <div className="form-group">
+            <label className="form-label" htmlFor="password">Password</label>
+            <input
+              id="password"
+              className="form-input"
+              type="password"
+              placeholder="min. 6 characters"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              minLength={6}
+              autoComplete="new-password"
+            />
+          </div>
 
-      <p>{message}</p>
-      <p>
-        Already have an account? <Link to="/login">Login</Link>
-      </p>
+          <button
+            type="submit"
+            className="form-submit"
+            disabled={loading}
+          >
+            {loading ? 'Creating account...' : 'Create account →'}
+          </button>
+        </form>
+
+        {message && (
+          <div className={`auth-message ${message.type}`}>
+            {message.text}
+          </div>
+        )}
+
+        <p className="auth-footer">
+          Already have an account?{' '}
+          <Link to="/login">Login</Link>
+        </p>
+
+      </div>
     </div>
-  );
+  )
 }

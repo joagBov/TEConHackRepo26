@@ -1,58 +1,89 @@
-import { useState } from "react";
-import { supabase } from "../lib/supabase";
-import { useNavigate, Link } from "react-router-dom";
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { supabase } from '../lib/supabase'
 
 export default function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [message, setMessage] = useState("");
-  const navigate = useNavigate();
+  const navigate = useNavigate()
+  const [email, setEmail]       = useState('')
+  const [password, setPassword] = useState('')
+  const [loading, setLoading]   = useState(false)
+  const [message, setMessage]   = useState<{ type: 'error' | 'success'; text: string } | null>(null)
 
-  async function handleLogin(e: React.FormEvent) {
-    e.preventDefault();
-    setMessage("");
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setMessage(null)
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
 
     if (error) {
-      setMessage(error.message);
-      return;
+      setMessage({ type: 'error', text: error.message })
+    } else {
+      setMessage({ type: 'success', text: 'Authenticated. Redirecting...' })
+      setTimeout(() => navigate('/dashboard'), 800)
     }
 
-    navigate("/dashboard");
+    setLoading(false)
   }
 
   return (
-    <div>
-      <h1>Login</h1>
+    <div className="auth-page">
+      <div className="auth-card">
 
-      <form onSubmit={handleLogin}>
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
+        <span className="auth-logo">CHAOS PLATFORM</span>
+        <h1 className="auth-title">Welcome back</h1>
+        <p className="auth-subtitle">// re-enter the chaos</p>
 
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
+        <form className="auth-form" onSubmit={handleLogin}>
+          <div className="form-group">
+            <label className="form-label" htmlFor="email">Email</label>
+            <input
+              id="email"
+              className="form-input"
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              autoComplete="email"
+            />
+          </div>
 
-        <button type="submit">Login</button>
-      </form>
+          <div className="form-group">
+            <label className="form-label" htmlFor="password">Password</label>
+            <input
+              id="password"
+              className="form-input"
+              type="password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              autoComplete="current-password"
+            />
+          </div>
 
-      <p>{message}</p>
-      <p>
-        No account? <Link to="/signup">Signup</Link>
-      </p>
+          <button
+            type="submit"
+            className="form-submit"
+            disabled={loading}
+          >
+            {loading ? 'Logging in...' : 'Login →'}
+          </button>
+        </form>
+
+        {message && (
+          <div className={`auth-message ${message.type}`}>
+            {message.text}
+          </div>
+        )}
+
+        <p className="auth-footer">
+          No account?{' '}
+          <Link to="/signup">Create one</Link>
+        </p>
+
+      </div>
     </div>
-  );
+  )
 }
